@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LifeRPG</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0e1a;--bg2:#0f1525;--bg3:#141b2e;--bg4:#1a2235;
+  --border:#1e2d48;--border2:#2a3f5f;
+  --text:#d0dcea;--text2:#8ea5c0;--text3:#4a6280;
+  --hp:#f05070;--xp:#22d47a;--skill:#b06df0;--int:#30b8f8;
+  --gold:#e8c040;--red:#f05060;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{min-height:100%;background:var(--bg);}
+body{font-family:'Inter',sans-serif;color:var(--text);font-size:14px;line-height:1.5;overflow-x:hidden;}
+
+/* HEADER */
+#hdr{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:12px 48px;background:var(--bg2);border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:50;
+}
+.hdr-brand{font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:700;color:var(--int);letter-spacing:2px;}
+.hdr-date{font-size:11px;color:var(--text2);margin-top:2px;}
+.hdr-right{display:flex;flex-direction:column;align-items:flex-end;gap:1px;}
+.time-lbl{font-size:10px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;}
+#time-wrap{display:flex;align-items:center;gap:8px;}
+.time-val{font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:700;color:var(--gold);cursor:pointer;letter-spacing:2px;transition:opacity .15s;}
+.time-val:hover{opacity:.7;}
+#time-inp{font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:700;color:var(--gold);background:transparent;border:none;border-bottom:2px solid var(--gold);width:80px;text-align:right;outline:none;}
+.time-ok{font-size:11px;font-weight:600;padding:4px 10px;background:var(--gold);color:#000;border:none;cursor:pointer;border-radius:3px;}
+.hdr-nonref{font-size:10px;color:var(--red);letter-spacing:.5px;}
+
+/* NAV */
+#nav{display:flex;align-items:center;padding:0 48px;background:var(--bg2);border-bottom:1px solid var(--border);}
+.nav-btn{font-size:12px;font-weight:600;padding:11px 18px;border:none;background:transparent;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:color .15s,border-color .15s;}
+.nav-btn:hover{color:var(--text);}
+.nav-btn.active{color:var(--text);border-bottom-color:var(--text);}
+.nav-btn[data-tab="hp"].active{color:var(--hp);border-bottom-color:var(--hp);}
+.nav-btn[data-tab="xp"].active{color:var(--xp);border-bottom-color:var(--xp);}
+.nav-btn[data-tab="skill"].active{color:var(--skill);border-bottom-color:var(--skill);}
+.nav-btn[data-tab="int"].active{color:var(--int);border-bottom-color:var(--int);}
+.nav-spacer{flex:1;}
+
+/* MAIN */
+#main{max-width:1060px;margin:0 auto;padding:28px 48px;}
+.tab{display:none;}.tab.active{display:block;}
+
+/* DASHBOARD */
+.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+.stat-card{
+  background:var(--bg2);border:1px solid var(--border);
+  padding:24px 20px 18px;cursor:pointer;
+  position:relative;overflow:hidden;transition:border-color .2s,transform .15s;
+  min-height:160px;display:flex;flex-direction:column;justify-content:space-between;
+}
+.stat-card:hover{border-color:var(--border2);transform:translateY(-2px);}
+.stat-card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.stat-card.hp::after{background:var(--hp);}.stat-card.xp::after{background:var(--xp);}
+.stat-card.skill::after{background:var(--skill);}.stat-card.int::after{background:var(--int);}
+.sc-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
+.sc-tag{font-size:11px;font-weight:600;letter-spacing:1px;color:var(--text3);text-transform:uppercase;}
+.sc-edit{font-size:11px;color:var(--text3);background:none;border:none;cursor:pointer;padding:2px 8px;border-radius:3px;transition:all .15s;}
+.sc-edit:hover{color:var(--text);background:var(--bg4);}
+.sc-name{font-size:12px;color:var(--text2);margin-bottom:4px;}
+.sc-val{font-family:'JetBrains Mono',monospace;font-size:50px;font-weight:700;line-height:1;}
+.sc-val-inp{font-family:'JetBrains Mono',monospace;font-size:44px;font-weight:700;background:transparent;border:none;border-bottom:2px solid currentColor;outline:none;width:150px;color:inherit;}
+.stat-card.hp .sc-val,.stat-card.hp .sc-val-inp{color:var(--hp);}
+.stat-card.xp .sc-val,.stat-card.xp .sc-val-inp{color:var(--xp);}
+.stat-card.skill .sc-val,.stat-card.skill .sc-val-inp{color:var(--skill);}
+.stat-card.int .sc-val,.stat-card.int .sc-val-inp{color:var(--int);}
+.sc-hint{font-size:10px;color:var(--text3);margin-top:6px;}
+
+/* TAB HEADER */
+.tab-hdr{display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap;}
+.tab-title{font-size:15px;font-weight:700;letter-spacing:.5px;}
+.tab-title.hp{color:var(--hp);}.tab-title.xp{color:var(--xp);}
+.tab-title.skill{color:var(--skill);}.tab-title.int{color:var(--int);}
+.pts-badge{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;padding:3px 10px;border-radius:4px;cursor:pointer;transition:opacity .15s;}
+.pts-badge:hover{opacity:.7;}
+.pts-badge.hp{background:rgba(240,80,112,.15);color:var(--hp);}
+.pts-badge.xp{background:rgba(34,212,122,.15);color:var(--xp);}
+.pts-badge.skill{background:rgba(176,109,240,.15);color:var(--skill);}
+.pts-badge.int{background:rgba(48,184,248,.15);color:var(--int);}
+.pts-inp{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;background:transparent;border:none;border-bottom:2px solid currentColor;outline:none;width:80px;padding:1px 4px;color:inherit;}
+.spacer{flex:1;}
+.btn{font-size:11px;font-weight:600;padding:6px 12px;border:1px solid var(--border2);border-radius:3px;cursor:pointer;background:transparent;transition:background .15s;}
+.btn-c{color:var(--int);}.btn-c:hover{background:rgba(48,184,248,.08);}
+.btn-r{color:var(--red);}.btn-r:hover{background:rgba(240,80,96,.08);}
+.btn-g{color:var(--xp);}.btn-g:hover{background:rgba(34,212,122,.08);}
+.btn-gold{color:var(--gold);}.btn-gold:hover{background:rgba(232,192,64,.08);}
+
+/* TWO COL */
+.two-col{display:grid;grid-template-columns:1fr 280px;gap:18px;align-items:start;}
+
+/* TASKS */
+.tasks-wrap{display:flex;flex-direction:column;gap:10px;}
+.quick-add-bar{display:flex;gap:8px;align-items:center;background:var(--bg2);border:1px solid var(--border);padding:7px 12px;}
+.qa-inp{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-size:13px;font-family:'Inter',sans-serif;}
+.qa-inp::placeholder{color:var(--text3);}
+.group-block{background:var(--bg2);border:1px solid var(--border);overflow:hidden;}
+.group-hdr{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bg3);border-bottom:1px solid var(--border);}
+.group-hdr-name{font-size:12px;font-weight:600;letter-spacing:.5px;color:var(--text2);flex:1;cursor:text;}
+.group-hdr-inp{font-size:12px;font-weight:600;background:transparent;border:none;border-bottom:1px solid var(--border2);color:var(--text);outline:none;flex:1;}
+.group-del{font-size:10px;color:var(--text3);background:none;border:none;cursor:pointer;padding:2px 7px;border-radius:2px;transition:color .15s;}
+.group-del:hover{color:var(--red);}
+.task-row{display:flex;align-items:center;gap:9px;padding:7px 12px;border-bottom:1px solid var(--border);transition:background .1s;cursor:grab;}
+.task-row:last-child{border-bottom:none;}
+.task-row:hover{background:rgba(255,255,255,.018);}
+.task-row.dragging{opacity:.35;background:var(--bg4);}
+.task-row.drag-over{border-top:2px solid var(--int);background:rgba(48,184,248,.04);}
+.drag-handle{color:var(--text3);font-size:13px;cursor:grab;padding:0 2px;user-select:none;line-height:1;flex-shrink:0;}
+.task-cb{width:15px;height:15px;border:1.5px solid var(--border2);background:transparent;cursor:pointer;appearance:none;-webkit-appearance:none;flex-shrink:0;position:relative;transition:all .1s;border-radius:2px;}
+.task-cb:checked{border-color:currentColor;}
+.task-cb.hp:checked{background:var(--hp);border-color:var(--hp);}
+.task-cb.xp:checked{background:var(--xp);border-color:var(--xp);}
+.task-cb.skill:checked{background:var(--skill);border-color:var(--skill);}
+.task-cb.int:checked{background:var(--int);border-color:var(--int);}
+.task-cb:checked::after{content:'';position:absolute;top:1px;left:4px;width:4px;height:7px;border-right:1.5px solid #fff;border-bottom:1.5px solid #fff;transform:rotate(45deg);}
+.task-lbl{flex:1;font-size:13px;color:var(--text);}
+.task-lbl.done{text-decoration:line-through;color:var(--text3);}
+.task-lbl-inp{flex:1;font-size:13px;background:transparent;border:none;border-bottom:1px solid var(--border2);color:var(--text);outline:none;font-family:'Inter',sans-serif;}
+.task-del{font-size:12px;color:var(--text3);background:none;border:none;cursor:pointer;padding:1px 5px;opacity:0;transition:opacity .15s;}
+.task-row:hover .task-del{opacity:1;}
+.task-del:hover{color:var(--red);}
+.group-add-row{display:flex;gap:8px;padding:6px 12px;background:rgba(0,0,0,.12);border-top:1px solid var(--border);}
+.group-add-inp{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-size:12px;font-family:'Inter',sans-serif;}
+.group-add-inp::placeholder{color:var(--text3);}
+.group-add-btn{font-size:10px;font-weight:600;color:var(--int);background:none;border:none;cursor:pointer;padding:2px 6px;}
+.drop-zone{border:1px dashed var(--border);margin:4px 12px 6px;height:32px;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text3);transition:all .15s;}
+.drop-zone.over{border-color:var(--int);color:var(--int);background:rgba(48,184,248,.04);}
+
+/* SIDE PANEL */
+.side-panel{display:flex;flex-direction:column;gap:12px;}
+.sp-block{background:var(--bg2);border:1px solid var(--border);padding:13px;}
+.sp-ttl{font-size:10px;font-weight:600;letter-spacing:1.5px;color:var(--text3);text-transform:uppercase;margin-bottom:9px;padding-bottom:7px;border-bottom:1px solid var(--border);}
+.sp-row{display:flex;gap:6px;align-items:center;margin-top:6px;}
+.sp-inp{flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text);outline:none;padding:5px 8px;font-size:12px;font-family:'Inter',sans-serif;border-radius:2px;}
+.sp-inp:focus{border-color:var(--border2);}
+.sp-inp::placeholder{color:var(--text3);}
+.sp-big-num{font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:700;vertical-align:middle;margin-left:6px;}
+.sp-li{display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px;color:var(--text2);}
+.sp-li:last-child{border-bottom:none;}
+.sp-li-txt{flex:1;}
+.sp-li-del{font-size:11px;color:var(--text3);background:none;border:none;cursor:pointer;padding:0 4px;}
+.sp-li-del:hover{color:var(--red);}
+.ongoing-box{background:var(--bg3);border:1px solid var(--border);padding:9px;margin-bottom:7px;}
+.ongoing-lbl{font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;}
+.ongoing-val{font-size:13px;font-weight:600;color:var(--skill);}
+.book-card{background:rgba(48,184,248,.05);border:1px solid rgba(48,184,248,.15);padding:9px;margin-bottom:7px;}
+.book-card-ttl{font-size:12px;font-weight:600;color:var(--int);margin-bottom:5px;}
+.book-pg-row{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text2);}
+.pg-inp{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;background:transparent;border:none;border-bottom:1px solid var(--border2);color:var(--int);outline:none;width:48px;text-align:center;}
+.tag-done{font-size:9px;font-weight:600;padding:1px 5px;border-radius:2px;background:rgba(34,212,122,.12);color:var(--xp);flex-shrink:0;}
+.tag-next{font-size:9px;font-weight:600;padding:1px 5px;border-radius:2px;background:rgba(48,184,248,.12);color:var(--int);flex-shrink:0;}
+
+/* SETTINGS */
+.set-block{background:var(--bg2);border:1px solid var(--border);padding:18px;margin-bottom:12px;}
+.set-ttl{font-size:11px;font-weight:700;letter-spacing:1px;color:var(--text2);text-transform:uppercase;margin-bottom:12px;padding-bottom:9px;border-bottom:1px solid var(--border);}
+.set-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;}
+.set-desc{font-size:13px;color:var(--text2);flex:1;}
+.exp-ta{width:100%;height:100px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);font-family:'JetBrains Mono',monospace;font-size:11px;padding:8px;outline:none;resize:vertical;margin-top:10px;border-radius:2px;}
+.danger-note{font-size:11px;color:var(--red);margin-top:6px;}
+
+/* MODAL */
+#modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;align-items:center;justify-content:center;}
+#modal-ov.show{display:flex;}
+.modal{background:var(--bg2);border:1px solid var(--border2);padding:22px;min-width:290px;max-width:400px;width:90%;}
+.modal-ttl{font-size:13px;font-weight:700;color:var(--int);letter-spacing:.5px;margin-bottom:14px;}
+.modal-inp{width:100%;font-family:'Inter',sans-serif;font-size:14px;background:var(--bg3);border:1px solid var(--border);border-bottom:2px solid var(--int);color:var(--text);outline:none;padding:7px 10px;margin-bottom:12px;}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end;}
+
+/* TOAST */
+#toast{position:fixed;bottom:20px;right:20px;background:var(--bg2);border:1px solid var(--border2);color:var(--int);font-size:11px;font-weight:600;letter-spacing:.5px;padding:9px 16px;z-index:200;display:none;border-radius:3px;}
+#toast.show{display:block;}
+</style>
+</head>
+<body>
+
+<div id="hdr">
+  <div>
+    <div class="hdr-brand">LIFE RPG</div>
+    <div class="hdr-date" id="hdr-date"></div>
+  </div>
+  <div class="hdr-right">
+    <div class="time-lbl">Days Remaining</div>
+    <div id="time-wrap">
+      <span class="time-val" id="time-val" onclick="editTime()" title="Click to edit">1869</span>
+    </div>
+    <div class="hdr-nonref">Non-Refundable</div>
+  </div>
+</div>
+
+<div id="nav">
+  <button class="nav-btn active" data-tab="dashboard" onclick="goTab('dashboard',this)">Dashboard</button>
+  <button class="nav-btn" data-tab="hp" onclick="goTab('hp',this)">HP</button>
+  <button class="nav-btn" data-tab="xp" onclick="goTab('xp',this)">XP</button>
+  <button class="nav-btn" data-tab="skill" onclick="goTab('skill',this)">Skill</button>
+  <button class="nav-btn" data-tab="int" onclick="goTab('int',this)">INT</button>
+  <span class="nav-spacer"></span>
+  <button class="nav-btn" data-tab="settings" onclick="goTab('settings',this)">Settings</button>
+</div>
+
+<div id="main">
+
+  <!-- DASHBOARD -->
+  <div class="tab active" id="tab-dashboard">
+    <div class="dash-grid">
+      <div class="stat-card hp" onclick="goTab('hp',document.querySelector('[data-tab=hp]'))">
+        <div class="sc-top">
+          <span class="sc-tag">HP — Health</span>
+          <button class="sc-edit" onclick="event.stopPropagation();editStatDash(event,'hp')">Edit pts</button>
+        </div>
+        <div>
+          <div class="sc-name">Physical Wellness</div>
+          <span class="sc-val" id="dv-hp">0</span>
+        </div>
+        <div class="sc-hint">Click card to manage tasks</div>
+      </div>
+      <div class="stat-card xp" onclick="goTab('xp',document.querySelector('[data-tab=xp]'))">
+        <div class="sc-top">
+          <span class="sc-tag">XP — Experience</span>
+          <button class="sc-edit" onclick="event.stopPropagation();editStatDash(event,'xp')">Edit pts</button>
+        </div>
+        <div>
+          <div class="sc-name">Growth & Progress</div>
+          <span class="sc-val" id="dv-xp">0</span>
+        </div>
+        <div class="sc-hint">Click card to manage tasks</div>
+      </div>
+      <div class="stat-card skill" onclick="goTab('skill',document.querySelector('[data-tab=skill]'))">
+        <div class="sc-top">
+          <span class="sc-tag">Skill — Abilities</span>
+          <button class="sc-edit" onclick="event.stopPropagation();editStatDash(event,'skill')">Edit pts</button>
+        </div>
+        <div>
+          <div class="sc-name">Expertise & Arsenal</div>
+          <span class="sc-val" id="dv-skill">0</span>
+        </div>
+        <div class="sc-hint">Click card to manage tasks</div>
+      </div>
+      <div class="stat-card int" onclick="goTab('int',document.querySelector('[data-tab=int]'))">
+        <div class="sc-top">
+          <span class="sc-tag">INT — Intelligence</span>
+          <button class="sc-edit" onclick="event.stopPropagation();editStatDash(event,'int')">Edit pts</button>
+        </div>
+        <div>
+          <div class="sc-name">Knowledge & Reading</div>
+          <span class="sc-val" id="dv-int">0</span>
+        </div>
+        <div class="sc-hint">Click card to manage tasks</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HP -->
+  <div class="tab" id="tab-hp">
+    <div class="tab-hdr">
+      <span class="tab-title hp">HP</span>
+      <span class="pts-badge hp" id="pb-hp" ondblclick="editPtsBadge(event,'hp')" title="Double-click to edit">0 pts</span>
+      <span class="spacer"></span>
+      <button class="btn btn-c" onclick="openAddGroup('hp')">+ Group</button>
+      <button class="btn btn-r" onclick="resetChecks('hp')">Reset Checks</button>
+    </div>
+    <div class="tasks-wrap" id="tw-hp">
+      <div class="quick-add-bar">
+        <span style="font-size:11px;color:var(--text3);flex-shrink:0;">Quick add:</span>
+        <input class="qa-inp" id="qa-hp" placeholder="Add ungrouped task, press Enter..." onkeydown="if(event.key==='Enter')quickAdd('hp')">
+        <button class="btn btn-c" style="font-size:10px;padding:4px 10px;flex-shrink:0;" onclick="quickAdd('hp')">Add</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- XP -->
+  <div class="tab" id="tab-xp">
+    <div class="tab-hdr">
+      <span class="tab-title xp">XP</span>
+      <span class="pts-badge xp" id="pb-xp" ondblclick="editPtsBadge(event,'xp')" title="Double-click to edit">0 pts</span>
+      <span class="spacer"></span>
+      <button class="btn btn-c" onclick="openAddGroup('xp')">+ Group</button>
+      <button class="btn btn-r" onclick="resetChecks('xp')">Reset Checks</button>
+    </div>
+    <div class="tasks-wrap" id="tw-xp">
+      <div class="quick-add-bar">
+        <span style="font-size:11px;color:var(--text3);flex-shrink:0;">Quick add:</span>
+        <input class="qa-inp" id="qa-xp" placeholder="Add ungrouped task, press Enter..." onkeydown="if(event.key==='Enter')quickAdd('xp')">
+        <button class="btn btn-c" style="font-size:10px;padding:4px 10px;flex-shrink:0;" onclick="quickAdd('xp')">Add</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SKILL -->
+  <div class="tab" id="tab-skill">
+    <div class="tab-hdr">
+      <span class="tab-title skill">Skill</span>
+      <span class="pts-badge skill" id="pb-skill" ondblclick="editPtsBadge(event,'skill')" title="Double-click to edit">0 pts</span>
+      <span class="spacer"></span>
+      <button class="btn btn-c" onclick="openAddGroup('skill')">+ Group</button>
+      <button class="btn btn-r" onclick="resetChecks('skill')">Reset Checks</button>
+    </div>
+    <div class="two-col">
+      <div class="tasks-wrap" id="tw-skill">
+        <div class="quick-add-bar">
+          <span style="font-size:11px;color:var(--text3);flex-shrink:0;">Quick add:</span>
+          <input class="qa-inp" id="qa-skill" placeholder="Add ungrouped task..." onkeydown="if(event.key==='Enter')quickAdd('skill')">
+          <button class="btn btn-c" style="font-size:10px;padding:4px 10px;flex-shrink:0;" onclick="quickAdd('skill')">Add</button>
+        </div>
+      </div>
+      <div class="side-panel">
+        <div class="sp-block">
+          <div class="sp-ttl">Current Skill</div>
+          <div class="ongoing-box">
+            <div class="ongoing-lbl">Ongoing</div>
+            <div class="ongoing-val" id="sk-ongoing-disp">—</div>
+          </div>
+          <div class="sp-row">
+            <input class="sp-inp" id="sk-ongoing-inp" placeholder="e.g. Python, Guitar...">
+            <button class="btn btn-c" style="font-size:10px;padding:4px 9px;" onclick="saveOngoing()">Set</button>
+          </div>
+        </div>
+        <div class="sp-block">
+          <div class="sp-ttl">Arsenal <span class="sp-big-num" id="sk-cnt" style="color:var(--skill);">0</span></div>
+          <div id="sk-arsenal-list"></div>
+          <div class="sp-row">
+            <input class="sp-inp" id="sk-arsenal-inp" placeholder="Add mastered skill...">
+            <button class="btn btn-c" style="font-size:10px;padding:4px 9px;" onclick="addArsenal()">+</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INT -->
+  <div class="tab" id="tab-int">
+    <div class="tab-hdr">
+      <span class="tab-title int">INT</span>
+      <span class="pts-badge int" id="pb-int" ondblclick="editPtsBadge(event,'int')" title="Double-click to edit">0 pts</span>
+      <span class="spacer"></span>
+      <button class="btn btn-c" onclick="openAddGroup('int')">+ Group</button>
+      <button class="btn btn-r" onclick="resetChecks('int')">Reset Checks</button>
+    </div>
+    <div class="two-col">
+      <div class="tasks-wrap" id="tw-int">
+        <div class="quick-add-bar">
+          <span style="font-size:11px;color:var(--text3);flex-shrink:0;">Quick add:</span>
+          <input class="qa-inp" id="qa-int" placeholder="Add ungrouped task..." onkeydown="if(event.key==='Enter')quickAdd('int')">
+          <button class="btn btn-c" style="font-size:10px;padding:4px 10px;flex-shrink:0;" onclick="quickAdd('int')">Add</button>
+        </div>
+      </div>
+      <div class="side-panel">
+        <div class="sp-block">
+          <div class="sp-ttl">Currently Reading</div>
+          <div class="book-card">
+            <div class="book-card-ttl" id="int-book-disp">No book set</div>
+            <div class="book-pg-row">
+              <span>Page</span>
+              <input class="pg-inp" id="int-pg" type="number" value="0" min="0" onchange="saveBookPg()">
+            </div>
+          </div>
+          <div class="sp-row">
+            <input class="sp-inp" id="int-book-inp" placeholder="Book title...">
+            <button class="btn btn-c" style="font-size:10px;padding:4px 9px;" onclick="setBook()">Set</button>
+          </div>
+        </div>
+        <div class="sp-block">
+          <div class="sp-ttl">Finished <span class="sp-big-num" id="int-fin-cnt" style="color:var(--xp);">0</span></div>
+          <div id="int-fin-list"></div>
+          <div class="sp-row">
+            <input class="sp-inp" id="int-fin-inp" placeholder="Add finished book...">
+            <button class="btn btn-c" style="font-size:10px;padding:4px 9px;" onclick="addFinBook()">+</button>
+          </div>
+        </div>
+        <div class="sp-block">
+          <div class="sp-ttl">Reading List</div>
+          <div id="int-fut-list"></div>
+          <div class="sp-row">
+            <input class="sp-inp" id="int-fut-inp" placeholder="Add to reading list...">
+            <button class="btn btn-c" style="font-size:10px;padding:4px 9px;" onclick="addFutBook()">+</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="tab" id="tab-settings">
+    <div class="set-block">
+      <div class="set-ttl">Export Data</div>
+      <div class="set-row">
+        <div class="set-desc">Export all data as JSON. Copy and save it.</div>
+        <button class="btn btn-g" onclick="doExport()">Export JSON</button>
+      </div>
+      <textarea class="exp-ta" id="export-ta" readonly placeholder="Your data will appear here..."></textarea>
+    </div>
+    <div class="set-block">
+      <div class="set-ttl">Import Data</div>
+      <div class="set-row">
+        <div class="set-desc">Paste previously exported JSON to restore data.</div>
+        <button class="btn btn-gold" onclick="doImport()">Import JSON</button>
+      </div>
+      <textarea class="exp-ta" id="import-ta" placeholder="Paste JSON here..."></textarea>
+      <div class="danger-note">⚠ This will overwrite your current data.</div>
+    </div>
+    <div class="set-block">
+      <div class="set-ttl">Danger Zone</div>
+      <div class="set-row">
+        <div class="set-desc">Reset everything. Cannot be undone.</div>
+        <button class="btn btn-r" onclick="doReset()">Reset All</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div id="modal-ov">
+  <div class="modal">
+    <div class="modal-ttl" id="modal-ttl">Add Group</div>
+    <input class="modal-inp" id="modal-inp" placeholder="Group name..." onkeydown="if(event.key==='Enter')modalOk()">
+    <div class="modal-btns">
+      <button class="btn btn-r" onclick="modalClose()">Cancel</button>
+      <button class="btn btn-c" onclick="modalOk()">Add</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ===== STATE =====
+function mkDefault(){
+  return {
+    time:1869,
+    stats:{hp:0,xp:0,skill:0,int:0},
+    tasks:{
+      hp:[{name:'Ungrouped',tasks:[]}],
+      xp:[{name:'Ungrouped',tasks:[]}],
+      skill:[{name:'Ungrouped',tasks:[]}],
+      int:[{name:'Ungrouped',tasks:[]}]
+    },
+    skill:{ongoing:'',arsenal:[]},
+    int:{currentBook:{title:'',page:0},finished:[],future:[]}
+  };
+}
+
+let S=loadS();
+function loadS(){
+  try{ const r=localStorage.getItem('lrpg3'); if(r) return JSON.parse(r); }catch(e){}
+  return mkDefault();
+}
+function save(){ localStorage.setItem('lrpg3',JSON.stringify(S)); }
+
+// ensure structure
+['hp','xp','skill','int'].forEach(t=>{
+  if(!S.tasks) S.tasks={};
+  if(!S.tasks[t]) S.tasks[t]=[{name:'Ungrouped',tasks:[]}];
+  if(!S.tasks[t].length) S.tasks[t]=[{name:'Ungrouped',tasks:[]}];
+});
+if(!S.skill) S.skill={ongoing:'',arsenal:[]};
+if(!S.int) S.int={currentBook:{title:'',page:0},finished:[],future:[]};
+
+// ===== INIT =====
+renderAll();
+setDate();
+
+function renderAll(){
+  updateTimeDisp();
+  updateDash();
+  ['hp','xp','skill','int'].forEach(t=>renderTasks(t));
+  renderSkillSide();
+  renderIntSide();
+}
+
+function setDate(){
+  const n=new Date();
+  const D=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('hdr-date').textContent=`${D[n.getDay()]}, ${M[n.getMonth()]} ${n.getDate()}, ${n.getFullYear()}`;
+}
+
+function updateTimeDisp(){ const el=document.getElementById('time-val'); if(el) el.textContent=S.time; }
+
+function updateDash(){
+  ['hp','xp','skill','int'].forEach(k=>{
+    const el=document.getElementById('dv-'+k); if(el) el.textContent=S.stats[k];
+    const pb=document.getElementById('pb-'+k); if(pb && pb.tagName==='SPAN') pb.textContent=S.stats[k]+' pts';
+  });
+}
+
+// ===== TIME =====
+function editTime(){
+  const w=document.getElementById('time-wrap');
+  w.innerHTML=`<input id="time-inp" type="number" value="${S.time}" onkeydown="if(event.key==='Enter')saveTime()"><button class="time-ok" onclick="saveTime()">OK</button>`;
+  setTimeout(()=>{ const e=document.getElementById('time-inp'); if(e){e.focus();e.select();} },10);
+}
+function saveTime(){
+  const v=parseInt(document.getElementById('time-inp').value);
+  if(!isNaN(v)) S.time=v; save();
+  document.getElementById('time-wrap').innerHTML=`<span class="time-val" id="time-val" onclick="editTime()" title="Click to edit">${S.time}</span>`;
+}
+
+// ===== STAT EDIT =====
+function editStatDash(e,key){
+  e.stopPropagation();
+  const el=document.getElementById('dv-'+key);
+  el.outerHTML=`<input class="sc-val-inp" id="si-${key}" type="number" value="${S.stats[key]}" onblur="saveStat('${key}',this)" onkeydown="if(event.key==='Enter')this.blur()">`;
+  setTimeout(()=>{ const i=document.getElementById('si-'+key); if(i){i.focus();i.select();} },10);
+}
+function saveStat(key,el){ const v=parseInt(el.value); if(!isNaN(v)) S.stats[key]=v; save(); renderAll(); }
+
+function editPtsBadge(e,key){
+  const el=e.target;
+  el.outerHTML=`<input class="pts-inp ${key}" id="pbi-${key}" type="number" value="${S.stats[key]}" onblur="savePtsBadge('${key}',this)" onkeydown="if(event.key==='Enter')this.blur()">`;
+  setTimeout(()=>{ const i=document.getElementById('pbi-'+key); if(i){i.focus();i.select();} },10);
+}
+function savePtsBadge(key,el){ const v=parseInt(el.value); if(!isNaN(v)) S.stats[key]=v; save(); renderAll(); }
+
+// ===== TABS =====
+function goTab(name,btn){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  if(btn) btn.classList.add('active');
+}
+
+// ===== TASKS =====
+let dragSrc=null;
+
+function renderTasks(tab){
+  const wrap=document.getElementById('tw-'+tab);
+  const qa=wrap.querySelector('.quick-add-bar');
+  wrap.innerHTML='';
+  if(qa) wrap.appendChild(qa);
+
+  // update pts badge
+  const pb=document.getElementById('pb-'+tab);
+  if(pb && pb.tagName==='SPAN') pb.textContent=S.stats[tab]+' pts';
+
+  S.tasks[tab].forEach((group,gi)=>{
+    const block=document.createElement('div');
+    block.className='group-block';
+
+    const hdr=document.createElement('div');
+    hdr.className='group-hdr';
+    hdr.innerHTML=`<span class="group-hdr-name" ondblclick="editGrpName(event,'${tab}',${gi})">${esc(group.name)}</span>
+      <button class="group-del" onclick="delGroup('${tab}',${gi})">✕ Delete Group</button>`;
+    block.appendChild(hdr);
+
+    const tc=document.createElement('div');
+    group.tasks.forEach((task,ti)=>{
+      tc.appendChild(mkTaskRow(tab,gi,ti,task));
+    });
+
+    // drop zone
+    const dz=document.createElement('div');
+    dz.className='drop-zone'; dz.textContent='Drop task here';
+    dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('over');});
+    dz.addEventListener('dragleave',()=>dz.classList.remove('over'));
+    dz.addEventListener('drop',e=>{
+      e.preventDefault(); dz.classList.remove('over');
+      if(!dragSrc) return;
+      const src=dragSrc; dragSrc=null;
+      const task=S.tasks[src.tab][src.gi].tasks.splice(src.ti,1)[0];
+      S.tasks[tab][gi].tasks.push(task);
+      save();
+      renderTasks(src.tab); if(src.tab!==tab) renderTasks(tab);
+    });
+    tc.appendChild(dz);
+    block.appendChild(tc);
+
+    const ar=document.createElement('div');
+    ar.className='group-add-row';
+    ar.innerHTML=`<input class="group-add-inp" id="gai-${tab}-${gi}" placeholder="+ Add task..." onkeydown="if(event.key==='Enter')addToGroup('${tab}',${gi})">
+      <button class="group-add-btn" onclick="addToGroup('${tab}',${gi})">+ Add</button>`;
+    block.appendChild(ar);
+    wrap.appendChild(block);
+  });
+}
+
+function mkTaskRow(tab,gi,ti,task){
+  const row=document.createElement('div');
+  row.className='task-row'; row.draggable=true;
+  row.innerHTML=`<span class="drag-handle" title="Drag to reorder/move">⠿</span>
+    <input type="checkbox" class="task-cb ${tab}" ${task.done?'checked':''}>
+    <span class="task-lbl${task.done?' done':''}" ondblclick="editTaskLbl(event,'${tab}',${gi},${ti})">${esc(task.label)}</span>
+    <button class="task-del" onclick="delTask('${tab}',${gi},${ti})">✕</button>`;
+  row.querySelector('.task-cb').onchange=()=>{ toggleTask(tab,gi,ti); };
+  row.addEventListener('dragstart',e=>{ dragSrc={tab,gi,ti}; row.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; });
+  row.addEventListener('dragend',()=>{ row.classList.remove('dragging'); document.querySelectorAll('.drag-over').forEach(el=>el.classList.remove('drag-over')); });
+  row.addEventListener('dragover',e=>{ e.preventDefault(); row.classList.add('drag-over'); });
+  row.addEventListener('dragleave',()=>row.classList.remove('drag-over'));
+  row.addEventListener('drop',e=>{ e.preventDefault(); row.classList.remove('drag-over'); dropOnRow(tab,gi,ti); });
+  return row;
+}
+
+function dropOnRow(dTab,dGi,dTi){
+  if(!dragSrc) return;
+  const src=dragSrc; dragSrc=null;
+  if(src.tab===dTab&&src.gi===dGi&&src.ti===dTi) return;
+  const task=S.tasks[src.tab][src.gi].tasks.splice(src.ti,1)[0];
+  S.tasks[dTab][dGi].tasks.splice(dTi,0,task);
+  save();
+  if(src.tab===dTab) renderTasks(src.tab);
+  else { renderTasks(src.tab); renderTasks(dTab); }
+}
+
+function toggleTask(tab,gi,ti){ S.tasks[tab][gi].tasks[ti].done=!S.tasks[tab][gi].tasks[ti].done; save(); renderTasks(tab); }
+function delTask(tab,gi,ti){ S.tasks[tab][gi].tasks.splice(ti,1); save(); renderTasks(tab); }
+
+function addToGroup(tab,gi){
+  const inp=document.getElementById('gai-'+tab+'-'+gi);
+  const v=inp.value.trim(); if(!v) return;
+  S.tasks[tab][gi].tasks.push({label:v,done:false});
+  inp.value=''; save(); renderTasks(tab);
+  setTimeout(()=>{ const el=document.getElementById('gai-'+tab+'-'+gi); if(el) el.focus(); },10);
+}
+
+function quickAdd(tab){
+  const inp=document.getElementById('qa-'+tab);
+  const v=inp.value.trim(); if(!v) return;
+  S.tasks[tab][0].tasks.push({label:v,done:false});
+  inp.value=''; save(); renderTasks(tab);
+}
+
+function editTaskLbl(e,tab,gi,ti){
+  e.stopPropagation();
+  const el=e.target;
+  const cur=S.tasks[tab][gi].tasks[ti].label;
+  el.outerHTML=`<input class="task-lbl-inp" value="${esc(cur)}" onblur="saveTaskLbl(this,'${tab}',${gi},${ti})" onkeydown="if(event.key==='Enter')this.blur()">`;
+  setTimeout(()=>{ const inp=document.querySelector('.task-lbl-inp'); if(inp){inp.focus();inp.select();} },10);
+}
+function saveTaskLbl(el,tab,gi,ti){ const v=el.value.trim(); if(v) S.tasks[tab][gi].tasks[ti].label=v; save(); renderTasks(tab); }
+
+function editGrpName(e,tab,gi){
+  const el=e.target;
+  el.outerHTML=`<input class="group-hdr-inp" value="${esc(S.tasks[tab][gi].name)}" onblur="saveGrpName(this,'${tab}',${gi})" onkeydown="if(event.key==='Enter')this.blur()">`;
+  setTimeout(()=>{ const inp=document.querySelector('.group-hdr-inp'); if(inp){inp.focus();inp.select();} },10);
+}
+function saveGrpName(el,tab,gi){ const v=el.value.trim(); if(v) S.tasks[tab][gi].name=v; save(); renderTasks(tab); }
+
+function delGroup(tab,gi){
+  if(!confirm(`Delete "${S.tasks[tab][gi].name}" and all its tasks?`)) return;
+  S.tasks[tab].splice(gi,1);
+  if(!S.tasks[tab].length) S.tasks[tab]=[{name:'Ungrouped',tasks:[]}];
+  save(); renderTasks(tab);
+}
+
+function resetChecks(tab){
+  if(!confirm('Reset all checks in '+tab.toUpperCase()+'?')) return;
+  S.tasks[tab].forEach(g=>g.tasks.forEach(t=>t.done=false));
+  save(); renderTasks(tab); toast('Checks reset');
+}
+
+// ===== ADD GROUP MODAL =====
+let modalTab='';
+function openAddGroup(tab){
+  modalTab=tab;
+  document.getElementById('modal-ttl').textContent='Add Group to '+tab.toUpperCase();
+  document.getElementById('modal-inp').value='';
+  document.getElementById('modal-ov').classList.add('show');
+  setTimeout(()=>document.getElementById('modal-inp').focus(),40);
+}
+function modalClose(){ document.getElementById('modal-ov').classList.remove('show'); }
+function modalOk(){
+  const v=document.getElementById('modal-inp').value.trim(); if(!v) return;
+  S.tasks[modalTab].push({name:v,tasks:[]});
+  save(); renderTasks(modalTab); modalClose(); toast('Group added');
+}
+document.getElementById('modal-ov').addEventListener('click',function(e){ if(e.target===this) modalClose(); });
+
+// ===== SKILL SIDE =====
+function renderSkillSide(){
+  document.getElementById('sk-ongoing-disp').textContent=S.skill.ongoing||'—';
+  document.getElementById('sk-ongoing-inp').value=S.skill.ongoing||'';
+  document.getElementById('sk-cnt').textContent=S.skill.arsenal.length;
+  const list=document.getElementById('sk-arsenal-list');
+  list.innerHTML='';
+  S.skill.arsenal.forEach((s,i)=>{
+    const d=document.createElement('div'); d.className='sp-li';
+    d.innerHTML=`<span class="sp-li-txt">${esc(s)}</span><button class="sp-li-del" onclick="removeArsenal(${i})">✕</button>`;
+    list.appendChild(d);
+  });
+}
+function saveOngoing(){ S.skill.ongoing=document.getElementById('sk-ongoing-inp').value.trim(); save(); renderSkillSide(); toast('Saved'); }
+function addArsenal(){ const inp=document.getElementById('sk-arsenal-inp'); const v=inp.value.trim(); if(!v) return; S.skill.arsenal.push(v); inp.value=''; save(); renderSkillSide(); }
+function removeArsenal(i){ S.skill.arsenal.splice(i,1); save(); renderSkillSide(); }
+
+// ===== INT SIDE =====
+function renderIntSide(){
+  const b=S.int.currentBook;
+  document.getElementById('int-book-disp').textContent=b.title||'No book set';
+  document.getElementById('int-pg').value=b.page||0;
+  document.getElementById('int-fin-cnt').textContent=S.int.finished.length;
+  const fl=document.getElementById('int-fin-list'); fl.innerHTML='';
+  S.int.finished.forEach((bk,i)=>{
+    const d=document.createElement('div'); d.className='sp-li';
+    d.innerHTML=`<span class="tag-done">Done</span><span class="sp-li-txt">${esc(bk)}</span><button class="sp-li-del" onclick="removeFinBook(${i})">✕</button>`;
+    fl.appendChild(d);
+  });
+  const ul=document.getElementById('int-fut-list'); ul.innerHTML='';
+  S.int.future.forEach((bk,i)=>{
+    const d=document.createElement('div'); d.className='sp-li';
+    d.innerHTML=`<span class="tag-next">Next</span><span class="sp-li-txt">${esc(bk)}</span><button class="sp-li-del" onclick="removeFutBook(${i})">✕</button>`;
+    ul.appendChild(d);
+  });
+}
+function setBook(){ const t=document.getElementById('int-book-inp').value.trim(); if(!t) return; S.int.currentBook.title=t; S.int.currentBook.page=0; document.getElementById('int-book-inp').value=''; save(); renderIntSide(); toast('Book set'); }
+function saveBookPg(){ S.int.currentBook.page=parseInt(document.getElementById('int-pg').value)||0; save(); }
+function addFinBook(){ const inp=document.getElementById('int-fin-inp'); const v=inp.value.trim(); if(!v) return; S.int.finished.push(v); inp.value=''; save(); renderIntSide(); }
+function removeFinBook(i){ S.int.finished.splice(i,1); save(); renderIntSide(); }
+function addFutBook(){ const inp=document.getElementById('int-fut-inp'); const v=inp.value.trim(); if(!v) return; S.int.future.push(v); inp.value=''; save(); renderIntSide(); }
+function removeFutBook(i){ S.int.future.splice(i,1); save(); renderIntSide(); }
+
+// ===== SETTINGS =====
+function doExport(){ document.getElementById('export-ta').value=JSON.stringify(S,null,2); toast('Exported — copy and save!'); }
+function doImport(){
+  const raw=document.getElementById('import-ta').value.trim();
+  if(!raw){ toast('Paste JSON first'); return; }
+  try{ S=JSON.parse(raw); save(); renderAll(); toast('Imported!'); document.getElementById('import-ta').value=''; }
+  catch(e){ toast('Invalid JSON'); }
+}
+function doReset(){ if(confirm('Reset ALL data? Cannot be undone.')) { localStorage.removeItem('lrpg3'); location.reload(); } }
+
+// ===== UTILS =====
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2200); }
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+</script>
+</body>
+</html>
